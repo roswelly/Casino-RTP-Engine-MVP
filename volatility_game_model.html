@@ -578,7 +578,7 @@
             const visited = new Set(path);
             const win = visited.has(chosenCell);
             const payout = win ? gameState.cellMultipliers[chosenCell] : 0;
-            const rtp = payout * 100; // since bet=1
+            const rtp = payout * 100; 
             logMessage(`Demo bet: 1 unit on Cell ${chosenCell} | ${win ? 'WIN' : 'LOSE'} | payout ${payout.toFixed(4)} | RTP ${rtp.toFixed(2)}%`, 'success');
         }
         

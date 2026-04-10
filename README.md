@@ -1,4 +1,4 @@
-# Volatility Game MVP — Math Model POC
+# Volatility Game MVP - Math Model POC
 
 Minimal sandbox to validate the math for a **path-based cell betting** game.
 

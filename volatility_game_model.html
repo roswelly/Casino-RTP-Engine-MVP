@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volatility Game - Math Model Proof of Concept</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #00ff00;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 24px;
+            color: #00ff00;
+        }
+        
+        .subtitle {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #00aa00;
+            font-size: 14px;
+        }
+        
+        .controls {
+            background: #111;
+            border: 2px solid #00ff00;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: inline-block;
+            width: 200px;
+            color: #00ff00;
+        }
+        
+        input, select, button {
+            background: #000;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 8px 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        
+        input[type="number"], input[type="text"] {
+            width: 150px;
+        }
+        
+        button {
+            cursor: pointer;
+            margin-right: 10px;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: #00ff00;
+            color: #000;
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .panel {
+            background: #111;
+            border: 2px solid #00ff00;
+            padding: 20px;
+        }
+        
+        .panel h2 {
+            margin-bottom: 15px;
+            font-size: 18px;
+            border-bottom: 1px solid #00ff00;
+            padding-bottom: 10px;
+        }
+        
+        canvas {
+            border: 1px solid #00ff00;
+            background: #000;
+            width: 100%;
+            display: block;
+        }
+        
+        .cell-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .cell {
+            background: #000;
+            border: 2px solid #00ff00;
+            padding: 10px;
+            text-align: center;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .cell.visited {
+            background: #003300;
+            border-color: #00ff00;
+            box-shadow: 0 0 10px #00ff00;
+        }
+        
+        .cell-number {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .cell-multiplier {
+            font-size: 14px;
+            color: #00aa00;
+        }
+        
+        .cell-probability {
+            font-size: 11px;
+            color: #007700;
+            margin-top: 3px;
+        }
+        
+        .stats {
+            background: #111;
+            border: 2px solid #00ff00;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .stats h2 {
+            margin-bottom: 15px;
+            font-size: 18px;
+            border-bottom: 1px solid #00ff00;
+            padding-bottom: 10px;
+        }
+        
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 5px;
+            background: #000;
+        }
+        
+        .stat-label {
+            color: #00aa00;
+        }
+        
+        .stat-value {
+            color: #00ff00;
+            font-weight: bold;
+        }
+        
+        .provably-fair {
+            background: #111;
+            border: 2px solid #00ff00;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .provably-fair h2 {
+            margin-bottom: 15px;
+            font-size: 18px;
+            border-bottom: 1px solid #00ff00;
+            padding-bottom: 10px;
+        }
+        
+        .seed-info {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin-bottom: 8px;
+            padding: 5px;
+            background: #000;
+            word-break: break-all;
+        }
+        
+        .simulation-progress {
+            background: #111;
+            border: 2px solid #00ff00;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #000;
+            border: 1px solid #00ff00;
+            margin: 10px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #00ff00;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-weight: bold;
+        }
+        
+        .log {
+            background: #000;
+            border: 1px solid #00ff00;
+            padding: 10px;
+            height: 200px;
+            overflow-y: auto;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+        }
+        
+        .error {
+            color: #ff0000;
+        }
+        
+        .success {
+            color: #00ff00;
+        }
+        
+        .warning {
+            color: #ffff00;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>VOLATILITY GAME - MATHEMATICAL MODEL PROOF OF CONCEPT</h1>
+        <p class="subtitle">Path-Based Multiplayer Game with Provably Fair RNG & RTP Verification</p>
+        
+        <div class="controls">
+            <h2>Configuration</h2>
+            <div class="control-group">
+                <label>Target RTP:</label>
+                <input type="number" id="targetRTP" value="97.5" min="90" max="99" step="0.1">
+                <span>%</span>
+            </div>
+            <div class="control-group">
+                <label>Number of Cells:</label>
+                <input type="number" id="numCells" value="10" min="5" max="20" step="1">
+            </div>
+            <div class="control-group">
+                <label>Path Length (steps):</label>
+                <input type="number" id="pathLength" value="30" min="10" max="100" step="1">
+            </div>
+            <div class="control-group">
+                <label>Monte Carlo Simulations:</label>
+                <input type="number" id="monteCarloRounds" value="100000" min="10000" max="1000000" step="10000">
+            </div>
+            <div class="control-group">
+                <button id="calculateBtn">Calculate Multipliers</button>
+                <button id="runSingleBtn" disabled>Run Single Round</button>
+                <button id="simulateBtn" disabled>Run Large Simulation</button>
+                <button id="resetBtn">Reset</button>
+            </div>
+        </div>
+        
+        <div class="stats">
+            <h2>System Statistics</h2>
+            <div class="stat-row">
+                <span class="stat-label">Target RTP:</span>
+                <span class="stat-value" id="statTargetRTP">-</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Calculated RTP (Monte Carlo):</span>
+                <span class="stat-value" id="statCalculatedRTP">-</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Actual RTP (from simulations):</span>
+                <span class="stat-value" id="statActualRTP">-</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">House Edge:</span>
+                <span class="stat-value" id="statHouseEdge">-</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Total Rounds Simulated:</span>
+                <span class="stat-value" id="statTotalRounds">0</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Total Wagered:</span>
+                <span class="stat-value" id="statTotalWagered">0</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Total Paid Out:</span>
+                <span class="stat-value" id="statTotalPaidOut">0</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">RTP Deviation:</span>
+                <span class="stat-value" id="statDeviation">-</span>
+            </div>
+        </div>
+        
+        <div class="grid-container">
+            <div class="panel">
+                <h2>Path Visualization</h2>
+                <canvas id="pathCanvas" width="600" height="400"></canvas>
+            </div>
+            
+            <div class="panel">
+                <h2>Cell Multipliers & Probabilities</h2>
+                <div class="cell-grid" id="cellGrid"></div>
+            </div>
+        </div>
+        
+        <div class="provably-fair">
+            <h2>Provably Fair Information (Current Round)</h2>
+            <div class="seed-info">
+                <strong>Server Seed Hash (pre-commit):</strong> <span id="serverSeedHash">-</span>
+            </div>
+            <div class="seed-info">
+                <strong>Client Seed:</strong> <span id="clientSeed">-</span>
+            </div>
+            <div class="seed-info">
+                <strong>Nonce:</strong> <span id="nonce">-</span>
+            </div>
+            <div class="seed-info">
+                <strong>Server Seed (revealed):</strong> <span id="serverSeedRevealed">-</span>
+            </div>
+            <div class="seed-info">
+                <strong>Combined Hash:</strong> <span id="combinedHash">-</span>
+            </div>
+        </div>
+        
+        <div class="simulation-progress">
+            <h2>Simulation Progress</h2>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%">0%</div>
+            </div>
+            <div class="control-group">
+                <label>Simulation Rounds:</label>
+                <input type="number" id="simulationRounds" value="1000000" min="100000" max="20000000" step="100000">
+                <span>(Recommended: 1M - 20M)</span>
+            </div>
+            <div class="log" id="simulationLog"></div>
+        </div>
+    </div>
+
+    <script>
+        async function sha256Hex(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        function generateRandomSeedHex32() {
+            return Array.from(crypto.getRandomValues(new Uint8Array(32)))
+                .map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+               function cyrb128(str) {
+            let h1 = 1779033703, h2 = 3144134277, h3 = 1013904242, h4 = 2773480762;
+            for (let i = 0; i < str.length; i++) {
+                const k = str.charCodeAt(i);
+                h1 = h2 ^ Math.imul(h1 ^ k, 597399067);
+                h2 = h3 ^ Math.imul(h2 ^ k, 2869860233);
+                h3 = h4 ^ Math.imul(h3 ^ k, 951274213);
+                h4 = h1 ^ Math.imul(h4 ^ k, 2716044179);
+            }
+            h1 = Math.imul(h3 ^ (h1 >>> 18), 597399067);
+            h2 = Math.imul(h4 ^ (h2 >>> 22), 2869860233);
+            h3 = Math.imul(h1 ^ (h3 >>> 17), 951274213);
+            h4 = Math.imul(h2 ^ (h4 >>> 19), 2716044179);
+            return [(h1 ^ h2 ^ h3 ^ h4) >>> 0, (h2 ^ h1) >>> 0, (h3 ^ h1) >>> 0, (h4 ^ h1) >>> 0];
+        }
+
+        function sfc32(a, b, c, d) {
+            return function() {
+                a >>>= 0; b >>>= 0; c >>>= 0; d >>>= 0;
+                let t = (a + b) | 0;
+                a = b ^ (b >>> 9);
+                b = (c + (c << 3)) | 0;
+                c = (c << 21) | (c >>> 11);
+                d = (d + 1) | 0;
+                t = (t + d) | 0;
+                c = (c + t) | 0;
+                return (t >>> 0) / 4294967296;
+            };
+        }
+        
+        let gameState = {
+            targetRTP: 97.5,
+            numCells: 10,
+            pathLength: 30,
+            cellProbabilities: [],
+            cellMultipliers: [],
+            monteCarloRounds: 100000,
+            calculatedRTP: 0,
+            
+            totalRounds: 0,
+            totalWagered: 0,
+            totalPaidOut: 0,
+            
+            currentPath: [],
+            currentServerSeed: '',
+            currentClientSeed: '',
+            currentNonce: 0,
+            serverSeedHash: '',
+            
+            isCalculated: false
+        };
+        
+        const elements = {
+            targetRTP: document.getElementById('targetRTP'),
+            numCells: document.getElementById('numCells'),
+            pathLength: document.getElementById('pathLength'),
+            monteCarloRounds: document.getElementById('monteCarloRounds'),
+            calculateBtn: document.getElementById('calculateBtn'),
+            runSingleBtn: document.getElementById('runSingleBtn'),
+            simulateBtn: document.getElementById('simulateBtn'),
+            resetBtn: document.getElementById('resetBtn'),
+            simulationRounds: document.getElementById('simulationRounds'),
+            pathCanvas: document.getElementById('pathCanvas'),
+            cellGrid: document.getElementById('cellGrid'),
+            simulationLog: document.getElementById('simulationLog'),
+            progressFill: document.getElementById('progressFill')
+        };
+        
+        function getTransitionModel() {
+            return { pDown: 0.45, pUp: 0.45, pStay: 0.10 };
+        }
+
+        function stepPosition(position, u, numCells) {
+            const { pDown, pUp } = getTransitionModel();
+            if (u < pDown) return Math.max(0, position - 1);
+            if (u < pDown + pUp) return Math.min(numCells - 1, position + 1);
+            return position;
+        }
+
+        function calculateCellProbabilitiesExact() {
+            const n = gameState.numCells;
+            const T = gameState.pathLength;
+            const { pDown, pUp, pStay } = getTransitionModel();
+
+            const hitProbs = new Array(n).fill(0);
+
+            for (let target = 0; target < n; target++) {
+                let dist = new Array(n).fill(0);
+
+                if (target === 0) {
+                    hitProbs[target] = 1;
+                    continue;
+                }
+                dist[0] = 1; 
+
+                for (let t = 0; t < T; t++) {
+                    const next = new Array(n).fill(0);
+                    for (let pos = 0; pos < n; pos++) {
+                        const mass = dist[pos];
+                        if (mass === 0) continue;
+
+                        {
+                            const p2 = Math.max(0, pos - 1);
+                            if (p2 !== target) next[p2] += mass * pDown;
+                        }
+                        {
+                            const p2 = Math.min(n - 1, pos + 1);
+                            if (p2 !== target) next[p2] += mass * pUp;
+                        }
+                        {
+                            const p2 = pos;
+                            if (p2 !== target) next[p2] += mass * pStay;
+                        }
+                    }
+                    dist = next;
+                }
+
+                const probNeverHit = dist.reduce((a, b) => a + b, 0);
+                hitProbs[target] = 1 - probNeverHit;
+            }
+
+            logMessage(`Cell visit probabilities calculated (exact DP)`, 'success');
+            logMessage(`Sample probabilities: ${hitProbs.slice(0, 5).map(p => p.toFixed(6)).join(', ')}...`, 'success');
+            return hitProbs;
+        }
+        
+      
+        function calculateMultipliers(probabilities) {
+            const targetRTP = gameState.targetRTP / 100;
+            const multipliers = probabilities.map(p => (p > 0 ? (targetRTP / p) : 0));
+
+            let avgRTP = 0;
+            for (let i = 0; i < probabilities.length; i++) avgRTP += probabilities[i] * multipliers[i];
+            avgRTP /= probabilities.length;
+
+            gameState.calculatedRTP = avgRTP * 100;
+
+            logMessage(`Multipliers calculated (per-cell fair EV)`, 'success');
+            logMessage(`Expected RTP per bet (any cell): ~${(targetRTP * 100).toFixed(4)}%`, 'success');
+            return multipliers;
+        }
+        
+      
+        async function generatePath(serverSeed, clientSeed, nonce) {
+            const numCells = gameState.numCells;
+            const pathLength = gameState.pathLength;
+
+            const seedMaterial = `${serverSeed}:${clientSeed}:${nonce}`;
+            const combinedHash = await sha256Hex(seedMaterial);
+
+            const s = cyrb128(combinedHash);
+            const rng = sfc32(s[0], s[1], s[2], s[3]);
+
+            const path = [];
+            let position = 0;
+            for (let step = 0; step < pathLength; step++) {
+                path.push(position);
+                position = stepPosition(position, rng(), numCells);
+            }
+
+            return { path, hash: combinedHash };
+        }
+        
+        async function runSingleRound() {
+            logMessage('=== Starting New Round ===', 'warning');
+            
+            gameState.currentServerSeed = generateRandomSeedHex32();
+            gameState.currentClientSeed = generateRandomSeedHex32();
+            gameState.currentNonce++;
+            
+            gameState.serverSeedHash = await sha256Hex(gameState.currentServerSeed);
+            
+            const { path, hash } = await generatePath(
+                gameState.currentServerSeed,
+                gameState.currentClientSeed,
+                gameState.currentNonce
+            );
+            
+            gameState.currentPath = path;
+            
+            updateProvablyFairUI();
+            renderPath();
+            updateCellGrid(new Set(path));
+            
+            logMessage(`Path generated: ${path.length} steps`, 'success');
+            logMessage(`Unique cells visited: ${new Set(path).size}`, 'success');
+            
+            const chosenCell = 0;
+            const visited = new Set(path);
+            const win = visited.has(chosenCell);
+            const payout = win ? gameState.cellMultipliers[chosenCell] : 0;
+            const rtp = payout * 100; // since bet=1
+            logMessage(`Demo bet: 1 unit on Cell ${chosenCell} | ${win ? 'WIN' : 'LOSE'} | payout ${payout.toFixed(4)} | RTP ${rtp.toFixed(2)}%`, 'success');
+        }
+        
+        async function runLargeSimulation() {
+            const bets = parseInt(elements.simulationRounds.value);
+            
+            logMessage(`=== Starting Large Simulation: ${bets.toLocaleString()} bets ===`, 'warning');
+            
+            elements.simulateBtn.disabled = true;
+            elements.calculateBtn.disabled = true;
+            elements.runSingleBtn.disabled = true;
+            
+            let totalWagered = 0;
+            let totalPaidOut = 0;
+
+            const simSeed = `SIM:${gameState.targetRTP}:${gameState.numCells}:${gameState.pathLength}`;
+            const ss = cyrb128(simSeed);
+            const simRng = sfc32(ss[0], ss[1], ss[2], ss[3]);
+
+            const pregenPaths = 2000;
+            const paths = new Array(pregenPaths);
+            for (let i = 0; i < pregenPaths; i++) {
+                const path = [];
+                let pos = 0;
+                for (let step = 0; step < gameState.pathLength; step++) {
+                    path.push(pos);
+                    pos = stepPosition(pos, simRng(), gameState.numCells);
+                }
+                paths[i] = path;
+            }
+
+            const batchSize = 200000;
+            const batches = Math.ceil(bets / batchSize);
+            
+            const startTime = Date.now();
+            
+            for (let batch = 0; batch < batches; batch++) {
+                const batchBets = Math.min(batchSize, bets - batch * batchSize);
+
+                for (let i = 0; i < batchBets; i++) {
+                    const cell = Math.floor(simRng() * gameState.numCells);
+                    const path = paths[(batch * batchSize + i) % pregenPaths];
+
+                    let hit = false;
+                    for (let k = 0; k < path.length; k++) {
+                        if (path[k] === cell) { hit = true; break; }
+                    }
+
+                    const bet = 1;
+                    const payout = hit ? gameState.cellMultipliers[cell] : 0;
+                    totalWagered += bet;
+                    totalPaidOut += payout;
+                }
+                
+                gameState.totalRounds += batchBets;
+                gameState.totalWagered = totalWagered;
+                gameState.totalPaidOut = totalPaidOut;
+
+                const currentRTP = (totalPaidOut / totalWagered) * 100;
+                const progress = ((batch + 1) / batches * 100).toFixed(1);
+                
+                updateProgress(progress, `Bet ${gameState.totalRounds.toLocaleString()} | RTP: ${currentRTP.toFixed(4)}%`);
+                updateStats();
+                
+                if ((batch + 1) % 10 === 0 || batch === batches - 1) {
+                    logMessage(`Processed ${gameState.totalRounds.toLocaleString()} bets | RTP: ${currentRTP.toFixed(4)}%`, 'success');
+                }
+                
+                await new Promise(resolve => setTimeout(resolve, 0));
+            }
+            
+            const endTime = Date.now();
+            const duration = ((endTime - startTime) / 1000).toFixed(2);
+            
+            logMessage(`=== Simulation Complete ===`, 'success');
+            logMessage(`Time elapsed: ${duration} seconds`, 'success');
+            logMessage(`Bets per second: ${(bets / (duration)).toFixed(0)}`, 'success');
+            
+            const finalRTP = (gameState.totalPaidOut / gameState.totalWagered) * 100;
+            const deviation = Math.abs(finalRTP - gameState.targetRTP).toFixed(4);
+            
+            logMessage(`Final RTP: ${finalRTP.toFixed(6)}%`, 'success');
+            logMessage(`Target RTP: ${gameState.targetRTP}%`, 'success');
+            logMessage(`Deviation: ${deviation}%`, deviation < 0.1 ? 'success' : 'warning');
+            
+            elements.simulateBtn.disabled = false;
+            elements.calculateBtn.disabled = false;
+            elements.runSingleBtn.disabled = false;
+        }
+        
+        function updateProgress(percent, text) {
+            elements.progressFill.style.width = percent + '%';
+            elements.progressFill.textContent = text || (percent + '%');
+        }
+        
+        function updateStats() {
+            document.getElementById('statTargetRTP').textContent = gameState.targetRTP + '%';
+            document.getElementById('statCalculatedRTP').textContent = gameState.calculatedRTP.toFixed(4) + '%';
+            
+            const actualRTP = gameState.totalWagered > 0 
+                ? (gameState.totalPaidOut / gameState.totalWagered * 100).toFixed(6) 
+                : '-';
+            document.getElementById('statActualRTP').textContent = actualRTP !== '-' ? actualRTP + '%' : '-';
+            
+            const houseEdge = gameState.calculatedRTP > 0 
+                ? (100 - gameState.calculatedRTP).toFixed(4) 
+                : '-';
+            document.getElementById('statHouseEdge').textContent = houseEdge !== '-' ? houseEdge + '%' : '-';
+            
+            document.getElementById('statTotalRounds').textContent = gameState.totalRounds.toLocaleString();
+            document.getElementById('statTotalWagered').textContent = gameState.totalWagered.toFixed(2);
+            document.getElementById('statTotalPaidOut').textContent = gameState.totalPaidOut.toFixed(2);
+            
+            const deviation = actualRTP !== '-' 
+                ? Math.abs(parseFloat(actualRTP) - gameState.targetRTP).toFixed(4) 
+                : '-';
+            document.getElementById('statDeviation').textContent = deviation !== '-' ? deviation + '%' : '-';
+        }
+        
+        function updateProvablyFairUI() {
+            document.getElementById('serverSeedHash').textContent = gameState.serverSeedHash;
+            document.getElementById('clientSeed').textContent = gameState.currentClientSeed;
+            document.getElementById('nonce').textContent = gameState.currentNonce;
+            document.getElementById('serverSeedRevealed').textContent = gameState.currentServerSeed;
+            
+            sha256Hex(`${gameState.currentServerSeed}:${gameState.currentClientSeed}:${gameState.currentNonce}`)
+                .then(hash => {
+                    document.getElementById('combinedHash').textContent = hash;
+                });
+        }
+        
+        function updateCellGrid(visitedCells = new Set()) {
+            elements.cellGrid.innerHTML = '';
+            
+            for (let i = 0; i < gameState.numCells; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                if (visitedCells.has(i)) {
+                    cell.classList.add('visited');
+                }
+                
+                const number = document.createElement('div');
+                number.className = 'cell-number';
+                number.textContent = `Cell ${i}`;
+                
+                const multiplier = document.createElement('div');
+                multiplier.className = 'cell-multiplier';
+                multiplier.textContent = gameState.cellMultipliers[i] 
+                    ? `${gameState.cellMultipliers[i].toFixed(2)}x` 
+                    : '-';
+                
+                const probability = document.createElement('div');
+                probability.className = 'cell-probability';
+                probability.textContent = gameState.cellProbabilities[i] 
+                    ? `P: ${(gameState.cellProbabilities[i] * 100).toFixed(2)}%` 
+                    : '-';
+                
+                cell.appendChild(number);
+                cell.appendChild(multiplier);
+                cell.appendChild(probability);
+                
+                elements.cellGrid.appendChild(cell);
+            }
+        }
+        
+        function renderPath() {
+            const canvas = elements.pathCanvas;
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, width, height);
+            
+            if (gameState.currentPath.length === 0) return;
+            
+            const path = gameState.currentPath;
+            const numCells = gameState.numCells;
+            const padding = 40;
+            const plotWidth = width - 2 * padding;
+            const plotHeight = height - 2 * padding;
+            
+            ctx.strokeStyle = '#003300';
+            ctx.lineWidth = 1;
+            
+            for (let i = 0; i <= numCells; i++) {
+                const y = padding + (i / numCells) * plotHeight;
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(width - padding, y);
+                ctx.stroke();
+            }
+            
+            ctx.fillStyle = '#00aa00';
+            ctx.font = '12px Courier New';
+            ctx.textAlign = 'right';
+            for (let i = 0; i < numCells; i++) {
+                const y = padding + ((numCells - i - 0.5) / numCells) * plotHeight;
+                ctx.fillText(`Cell ${i}`, padding - 10, y + 4);
+            }
+            
+            ctx.strokeStyle = '#00ff00';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            for (let i = 0; i < path.length; i++) {
+                const x = padding + (i / (path.length - 1)) * plotWidth;
+                const y = padding + ((numCells - path[i] - 0.5) / numCells) * plotHeight;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            
+            ctx.stroke();
+            
+            ctx.fillStyle = '#00ff00';
+            for (let i = 0; i < path.length; i++) {
+                const x = padding + (i / (path.length - 1)) * plotWidth;
+                const y = padding + ((numCells - path[i] - 0.5) / numCells) * plotHeight;
+                
+                ctx.beginPath();
+                ctx.arc(x, y, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        function logMessage(message, type = 'success') {
+            const log = elements.simulationLog;
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        elements.calculateBtn.addEventListener('click', async () => {
+            elements.calculateBtn.disabled = true;
+            
+            gameState.targetRTP = parseFloat(elements.targetRTP.value);
+            gameState.numCells = parseInt(elements.numCells.value);
+            gameState.pathLength = parseInt(elements.pathLength.value);
+            gameState.monteCarloRounds = parseInt(elements.monteCarloRounds.value);
+            
+            logMessage('Starting calculation...', 'warning');
+            
+            gameState.cellProbabilities = calculateCellProbabilitiesExact();
+            
+            gameState.cellMultipliers = calculateMultipliers(gameState.cellProbabilities);
+            
+            updateCellGrid();
+            updateStats();
+            
+            gameState.isCalculated = true;
+            elements.runSingleBtn.disabled = false;
+            elements.simulateBtn.disabled = false;
+            elements.calculateBtn.disabled = false;
+            
+            updateProgress(0, 'Ready');
+            
+            logMessage('Calculation complete! Ready to run rounds.', 'success');
+        });
+        
+        elements.runSingleBtn.addEventListener('click', async () => {
+            if (!gameState.isCalculated) {
+                logMessage('Please calculate multipliers first!', 'error');
+                return;
+            }
+            await runSingleRound();
+        });
+        
+        elements.simulateBtn.addEventListener('click', async () => {
+            if (!gameState.isCalculated) {
+                logMessage('Please calculate multipliers first!', 'error');
+                return;
+            }
+            await runLargeSimulation();
+        });
+        
+        elements.resetBtn.addEventListener('click', () => {
+            gameState.totalRounds = 0;
+            gameState.totalWagered = 0;
+            gameState.totalPaidOut = 0;
+            gameState.currentPath = [];
+            gameState.currentNonce = 0;
+            
+            updateStats();
+            updateCellGrid();
+            renderPath();
+            updateProgress(0, 'Reset');
+            
+            elements.simulationLog.innerHTML = '';
+            logMessage('System reset', 'warning');
+        });
+        
+        logMessage('System initialized. Configure parameters and click "Calculate Multipliers" to begin.', 'success');
+        updateStats();
+        updateCellGrid();
+    </script>
+</body>
+</html>

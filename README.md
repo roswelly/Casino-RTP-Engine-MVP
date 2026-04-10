@@ -13,7 +13,7 @@ Rules used here:
 What’s included:
 
 - Exact per-cell hit probabilities (DP)
-- Multipliers targeting 97–98% RTP (per-cell EV)
+- Multipliers targeting 97-98% RTP (per-cell EV)
 - A large simulation mode (up to 20,000,000 bets)
 - Seed/nonce display for a demo “provably fair style” round
 
@@ -100,6 +100,6 @@ If you want it to load at `/` (homepage), rename `volatility_game_model.html` to
 
 ## Notes / scope
 
-- The large simulation uses a **fast deterministic PRNG** so 10–20M bet runs are practical.
+- The large simulation uses a **fast deterministic PRNG** so 10-20M bet runs are practical.
 - The “provably fair” shown in the UI is a **front-end demo**.
   - For production multiplayer, the server should generate and pre-commit `hash(serverSeed)` before bets close, then reveal `serverSeed` after the round for verification.
